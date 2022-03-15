@@ -4,27 +4,25 @@ Creating a tool for interpolated historical climate data in any location in Isra
 
 Last updated: 14/03/2022
 
-<! -- ### Folders -->
-
-in order to run the coordinate search change `global MyProject` in [run_weather](run_weather.do) and run the code in Stata. **run_weather.do** creates a dataset of average daily interpolated climate variables for each locality in Israel and it's territories between 1990-2020.   
+in order to run the project, change `global MyProject` in [run_weather](run_weather.do) and run the code inside Stata. **run_weather.do** creates a dataset of average daily interpolated climate variables for each locality in Israel and it's territories between 1990-2020.   
 
 The main folder is organized as follows:
 
 1. ### [documentation](documentation) 
-Documentation for raw data taken from the Israel Central Bureau of Statistics [CBS](documentation\cbs) and the Israel Meteorological Service [IMS](documentation\ims).
+    Documentation for raw data taken from the Israel Central Bureau of Statistics [CBS](documentation\cbs) and the Israel Meteorological Service [IMS](documentation\ims).
 
-2. ## [leeor](leeor)
-Old scripts and data for weather interpolation created by Leeor. currently contains:
-    2.1 [weather_data_April21_Iddo.do](leeor/weather_data_April21_Iddo.do): Script for creating `Village level data.dta` , a dataset of interpolated yearly averages of various climate variables. Requires raw-datasets not yet available to us. 
+2. ### [leeor](leeor)
+    Old scripts and data for weather interpolation created by Leeor. currently contains: <space><space>  
+        2.1 [weather_data_April21_Iddo.do](leeor/weather_data_April21_Iddo.do): script for creating `Village level data.dta` , a dataset of interpolated yearly averages of various climate variables. Requires raw-datasets not yet available to us. 
 
-3. ## [processed](processed)
-All files in processed are .dta dataset unless stated otherwise. 
-    3.1 [csv utf8 files](processed/csv utf8 files): Contains climate data csv files from [raw data](#raw-data) converted to utf-8 encoding. 
-    3.2 [daily_weather](processed/daily_weather.dta): Daily climate-variable averages for all weather-stations in [station_data](processed/station_data.dta)
-    3.3 [distance_matrix](processed/distance_matrix.dta): distance matrix between every locality in [yeshov_list](processed/yeshov_list.dta) and the three closest[weather-stations](processed/station_data.dta) of each type.
-    3.4 [merged_hourly_wind](processed/merged_hourly_wind): Hourly wind averages between 1.1.1990 - 12.4.1998. (The period recorded in [raw data\hourly wind](raw data\hourly wind) ).
-    3.5 [station_data](processed/station_data.dta): aggregated station data for all stations in [raw data](#raw-data).
-    3.6 [yeshov_list](processed/yeshov_list.dta): All localities that were under full Israeli sovergnity between 2003-2020. Including Israeli settelments in Gaza-strip and the West Bank that were evacuated in 2005. 
+3. ### [processed](processed)
+    All files in processed are .dta dataset unless stated otherwise.  
+        3.1 [csv utf8 files](processed/csv utf8 files): Contains climate data csv files from [raw data](#raw-data) converted to utf-8 encoding.  
+        3.2 [daily_weather](processed/daily_weather.dta): Daily climate-variable averages for all weather-stations in [station_data](processed/station_data.dta).   
+        3.3 [distance_matrix](processed/distance_matrix.dta): distance matrix between every locality in [yeshov_list](processed/yeshov_list.dta) and the three closest[weather-stations](processed/station_data.dta) of each type. <space><space>    
+        3.4 [merged_hourly_wind](processed/merged_hourly_wind): Hourly wind averages between 1.1.1990 - 12.4.1998. (The period recorded in [raw data\hourly wind](raw data\hourly wind) ).
+        3.5 [station_data](processed/station_data.dta): aggregated station data for all stations in [raw data](#raw-data).
+        3.6 [yeshov_list](processed/yeshov_list.dta): All localities that were under full Israeli sovergnity between 2003-2020. Including Israeli settelments in Gaza-strip and the West Bank that were evacuated in 2005.   
 
 4. ### [run_weather.do](run_weather.do)  
 5. ### [raw data](raw data):
