@@ -1,0 +1,6 @@
+
+processed/daily_weather.dta
+processed/yeshov_weather_daily.dta
+raw_data/climate/new_isr_daily_data_web.csv
+raw_data/climate/new_isr_gnd_obs_web.csv
+raw_data/climate/new_isr_rain_daily_web.csv
