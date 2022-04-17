@@ -60,7 +60,7 @@ foreach var of varlist s* {
 
 foreach type in cl ra {
 
-	forvalues i = 1/7 {
+	forvalues i = 1/30 {
 		gen min_`type'`i'_name = ""
 		egen double min_`type'station`i' = rowmin(*`type')
 		ds *`type'

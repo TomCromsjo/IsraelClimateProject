@@ -34,6 +34,7 @@ end
 capture  program drop replace_missing 
 program define replace_missing 
 	args metric station_type
+	local runs 0
 	ds `metric'*  //create list of weather variables 
 	local word_count `word count of `r(varlist)''  // local macro of number of weather-variables
 	local word_count = `word_count' - 1
@@ -54,6 +55,10 @@ program define replace_missing
 				local counter = `counter' + 1
 			}
 		}
+		local ++runs
+		if `runs' == 25 {
+			local counter 3 //exit after 25 runs
+		}		
 	}
 end
 

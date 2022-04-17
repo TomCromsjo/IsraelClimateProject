@@ -18,6 +18,7 @@ global locality_path "${MyProject}\raw_data\localities"
 global climate_path "${MyProject}\raw_data\climate"
 global script_path "${MyProject}\scripts"
 global processed_path "${MyProject}\processed"
+global thesis "C:\Users\owner\Documents\GitHub\Thesis\processed" 
 
 assert !missing("$MyProject")
 
