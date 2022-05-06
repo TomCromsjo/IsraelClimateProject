@@ -54,6 +54,14 @@ local s = `s' + 5
 replace coordinates = itm_x +itm_y `if' 
 drop _merge itm_*
 
+local new_obs_number = _N + 1
+set obs `new_obs_number'
+replace yeshov_name = "חוות שקמים" in `new_obs_number'
+replace yeshov_code_cbs = 1 in `new_obs_number'
+replace coordinates = "16526024" in `new_obs_number' // source google maps 04/05/2022
+replace height = 88 // source google earth 04.05.2022
+replace year = 2022
+
 save "${processed_path}\yeshov_list" ,replace
 
 foreach year of numlist 2003 2010 2020 {
