@@ -3,7 +3,7 @@ local namelist "yeshov_name yeshov_code_cbs height coordinates"
 
 capture program drop rename_save 
 program define rename_save 
-syntax namelist, year(integer) sheet(string) format(string)
+	syntax namelist, year(integer) sheet(string) format(string)
 
 	local englist "yeshov_name yeshov_code_cbs height coordinates"
 
@@ -14,7 +14,7 @@ syntax namelist, year(integer) sheet(string) format(string)
 	keep `englist'
 	gen year = `year' 
 
-	save processed\yeshov_list`year', replace 
+	save ${processed_path}\yeshov_list`year', replace 
 	
 end
 //set trace on 
@@ -27,11 +27,11 @@ rename_save שםיישובמלא סמליישוב גובהבמטרים קואו�
 replace coordinates = subinstr(coordinates," ","",.) 
 destring coordinates, replace 
 
-merge 1:1 yeshov_code using "processed\yeshov_list2010", ///
+merge 1:1 yeshov_code using "${processed_path}\yeshov_list2010", ///
 keepusing(`namelist' year) nogenerate update
 drop if coordinates > 1000000000
 
-merge 1:1 yeshov_code using "processed\yeshov_list2020", ///
+merge 1:1 yeshov_code using "${processed_path}\yeshov_list2020", ///
 keepusing(`namelist' year) update
 
 drop if coordinates<10000000 | coordinates ==. //removes coordinates with less than 8 digits
@@ -54,10 +54,18 @@ local s = `s' + 5
 replace coordinates = itm_x +itm_y `if' 
 drop _merge itm_*
 
-save "processed\yeshov_list" ,replace
+local new_obs_number = _N + 1
+set obs `new_obs_number'
+replace yeshov_name = "חוות שקמים" in `new_obs_number'
+replace yeshov_code_cbs = 1 in `new_obs_number'
+replace coordinates = "16526024" in `new_obs_number' // source google maps 04/05/2022
+replace height = 88 // source google earth 04.05.2022
+replace year = 2022
+
+save "${processed_path}\yeshov_list" ,replace
 
 foreach year of numlist 2003 2010 2020 {
-erase "processed\yeshov_list`year'.dta"
+erase "${processed_path}\yeshov_list`year'.dta"
 }
 
 
