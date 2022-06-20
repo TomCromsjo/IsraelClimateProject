@@ -2,14 +2,15 @@
 * create daily averages for Israel between 1990-2020 *
 ******************************************************
 version 17
-clear all
+frame change default
+set varabbrev on
 
 *commands:
 *merge_weather: merge climate data from daily_weather
 program define merge_weather 
-	args metric station_type
-	local i 1
-	foreach var of varlist min_`station_type'*_name { // for each of the closest stations to the locality
+	syntax varlist , metric(string) station_type(string) STARTing_value(integer)
+	local i `starting_value'
+	foreach var of varlist `varlist' { // for each of the closest stations to the locality
 	
 		*format station_id to match the format at station_data.dta
 		gen station_id = `var'
@@ -26,77 +27,111 @@ program define merge_weather
 		gen `metric'_`var' = `var'
 		gen `metric'_min_`station_type'station`i' =  min_`station_type'station`i'
 		local ++i
-		drop station_id					
-	}		
+		drop station_id			
+	}
+	drop min_`station_type'* 
 end
 
-*replace_missing:  replaces missing climate measurement with the measurement from the closest non-missing station
-capture  program drop replace_missing 
-program define replace_missing 
-	args metric station_type
-	local runs 0
-	ds `metric'*  //create list of weather variables 
-	local word_count `word count of `r(varlist)''  // local macro of number of weather-variables
-	local word_count = `word_count' - 1
-	local counter 0
-	while `counter' != 3 {
-		forvalues n = 1/`word_count'{
-			replace `metric'_min_`station_type'`n'_name = `metric'_min_`station_type'`n+1'_name ///
-			if mi(`metric'`n')
-			replace `metric'_min_`station_type'station`n' = `metric'_min_`station_type'station`n+1' ///
-			if mi(`metric'`n')
-			replace `metric'`n' = `metric'`n+1' ///
-			if mi(`metric'`n') //replace 'var' by 'next_var' if 'var' is missing
-		}
-		ds `metric'*  //create list of weather variables
-		forvalues i = 1/3 {
-			qui misstable sum `: word `i' of `r(varlist)''
-			if `r(N_eq_dot)' != 0 {
-				local counter = `counter' + 1
+*find_nearest:
+program define find_nearest
+	args m_size
+	
+	tempvar count
+	gen `count' = 10
+	forvalues i = 11/`m_size' {
+		replace `count' = `count' +1 if !mi(wind_speed`i')
+		forvalues j = 11/`m_size'{
+			replace wind_speed`j' = wind_speed`i' if `count' == `j' & !mi(wind_speed`i')
+			replace wind_speed_min_cl`j'_name = wind_speed_min_cl`i'_name if `count' ==  `j' & !mi(wind_speed`i')
+			replace wind_speed_min_clstation`j' = wind_speed_min_clstation`i' if `count' == `j' & !mi(wind_speed`i')
+			if `j' != `i' {
+				replace wind_speed`i' =. if `count' == `j' & !mi(wind_speed`i') 
+				replace wind_speed_min_cl`i'="" if `count' ==  `j' & !mi(wind_speed`i') 
+				replace wind_speed_min_clstation`i'=. if `count' == `j' & !mi(wind_speed`i') 
 			}
-		}
-		local ++runs
-		if `runs' == 25 {
-			local counter 3 //exit after 25 runs
-		}		
+		}	
 	}
 end
 
 *body:
 
 * creates one observation for every day between 1990-2020
-use "${processed_path}\yeshov_list" , clear //import locality list
+use "$processed_path\yeshov_list" , clear //import locality list
 keep yeshov_code_cbs yeshov_name
-expand 10950  // create a copy of the locality for each day
+expand 10957  // create a copy of the locality for each day
 gen date = "01/01/1990"
 gen numdate = date(date, "DMY")
-bysort yeshov_code: replace numdate = numdate + _n - 1 //label observations with succeeding dates
+bysort yeshov_code_cbs: replace numdate = numdate + _n - 1 //label observations with succeeding dates
 format numdate %td
 drop date
 rename numdate date
 
+*keep only observations for relevant localities
+gen year = year(date)
+merge m:1 yeshov_code_cbs year using "$processed_path\insured_localities" , keepusing(yeshov_code) keep(3) nogen 
+//erase "$processed_path\insured_localities.dta"
+ 
 * merge distance_matrix.dta 
-merge m:1 yeshov_code_cbs using "${processed_path}\distance_matrix" ,nogenerate
+global matched 0
+global m_size 13 
+global N = _N
+tempfile completed_dates
+tempfile new_dates
+local station_type cl 
 set trace on 
+local metric "wind_speed"
+local type "cl"
 
-* merge daily weather data from daily_weather.dta
-set trace on
-merge_weather wind_speed cl 
-set trace on 
-replace_missing wind_speed cl
-merge_weather rain_amount ra 
-, station_type("ra")
 
-save "${processed_path}\yeshov_weather_daily" , replace
-
-foreach metric in rain wind max_temp min_temp {	//loop over weather variables
-	ds `metric'*  //create list of weather variables 
-	local varlist `r(varlist)' // rename weather-variable-list varlist
-	local words `: word count `varlist''' // local macro of number of weather-variables
-	local var_count `words' - 1
-	foreach i in `var_count'{
-		local `var' `:word `i' of `varlist'' // define 'var' as the i'th weather-variable
-		local `next_var' `:word `i+1' of `varlist'' // define 'next_var' as the variable after 'var'
-		replace `var' = `next_var' if mi(`var')  
+while $matched != 5 {
+	if $m_size == 13 {
+		local starting_value 11
+		merge m:1 yeshov_code_cbs using "${processed_path}\distance_matrix"  ///
+		, keepusing(min_cl11_name - min_clstation$m_size) nogen keep(3)	
+		merge_weather min_`station_type'*_name , metric("wind_speed") ///
+		station_type("cl")  start(`starting_value')
+		local starting_value = 14
+		
 	}
-} 
+	else {
+		dis `starting_value'
+		merge m:1 yeshov_code_cbs using "${processed_path}\distance_matrix"  ///
+		, keepusing(min_cl${m_size}_name - min_clstation$m_size) nogen keep(3)	
+		merge_weather min_`station_type'`starting_value'_name , metric("wind_speed") ///
+		station_type("cl")  start(`starting_value')
+		local starting_value = `starting_value' +1
+	}
+	find_nearest $m_size
+	gen full = (!mi(wind_speed11) & !mi(wind_speed12) & !mi(wind_speed13))
+	preserve
+	keep if full == 1
+	gen `metric'_average = (`metric'_min_`type'station11 * `metric'11 ///
+	+`metric'_min_`type'station12 *`metric'12+`metric'_min_`type'station13 * `metric'13)/ ///
+	(`metric'_min_`type'station11+`metric'_min_`type'station12+`metric'_min_`type'station13)
+	keep yeshov_code_cbs yeshov_code yeshov_name date year `metric'_average 
+	if $m_size == 13 {
+		save "$processed_path\weather_averages" , replace
+	}
+	else {
+		save "`new_dates'" , replace
+		use "$processed_path\weather_averages" , clear
+		append using "`new_dates'"
+		save "$processed_path\weather_averages" , replace
+	}
+	restore
+	count if full == 1
+	global matched = $matched + `r(N)'
+	//global matched = $matched + 1
+	dis $matched
+	drop if full == 1
+	//forvalues i = ${m_size}(-1)1 {
+		//count if !mi(wind_speed`i')
+		//if `r(N)' == 0{
+			//drop wind_speed`i' wind_speed_min_cl`i'_name wind_speed_min_clstation`i'
+			//local var_number `i'
+		//}
+	//}
+	drop full
+
+}	
+

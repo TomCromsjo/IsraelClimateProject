@@ -26,3 +26,6 @@ processed/distance_matrix.dta
 processed/merged_hourly_wind.dta
 processed/station_data.dta
 processed/yeshov_list.dta
+processed/distance_matrix.dta
+*.dta
+*.csv

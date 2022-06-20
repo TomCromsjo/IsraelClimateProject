@@ -2,10 +2,9 @@
 * create distance matrix between stations and localities *
 **********************************************************
 version 17
+frame change default
 
-clear all
-
-use "${processed_path}\station_data" , clear //import station dataset
+use "$processed_path\station_data" , clear //import station dataset
 
 *change itm axes to 100 meter resolution 
 foreach ax in x y{
@@ -20,10 +19,12 @@ gen id_and_type = "s"+station_id + substr(station_type,1,2)
 keep coordinates id_and_type
 
 *create a wide dataset of stations and coordinates
+//set trace off 
 levelsof id_and_type, local(stations) // creates list of all stations
-foreach level in  `levels'{ // loop over stations
- levelsof coordinates if id_and_type == "`level'", local(coordinates) //create local with the coordinates of the stations
- gen `level' = `coordinates' // create variable with same name as station, and coordinate as value 
+
+foreach station in  `stations' { // loop over stations
+ levelsof coordinates if id_and_type == "`station'", local(coordinates) //create local with the coordinates of the stations
+ gen `station' = `coordinates' // create variable with same name as station, and coordinate as value 
 }
 keep s* //keep only station-variables
 tempfile station_coordinates 
@@ -32,11 +33,10 @@ save `station_coordinates', replace //save station list as temp-file
 *import localities
 use "${processed_path}\yeshov_list" ,clear
 tostring coordinates , replace 
-drop year
+drop year 
 merge 1:1 _n using `station_coordinates'
 drop if _merge == 2
 drop _merge
-
 
 *create distance matrix 
 local obs = _N 
@@ -56,11 +56,11 @@ foreach var of varlist s* {
 }
 
 
-*generate 3 shortest distances
-
+*generate num_stations shortest distances
+local num_staions = $num_stations +10
 foreach type in cl ra {
 
-	forvalues i = 1/30 {
+	forvalues i = 11/$num_stations { // for number of stations defined in run_weather
 		gen min_`type'`i'_name = ""
 		egen double min_`type'station`i' = rowmin(*`type')
 		ds *`type'
@@ -73,8 +73,7 @@ foreach type in cl ra {
 }
 
 keep yeshov_name yeshov_code_cbs coordinates height min_*
-save "${processed_path}\distance_matrix" , replace 
-
+save "$processed_path\distance_matrix" , replace 
 
 
 

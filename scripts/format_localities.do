@@ -59,8 +59,12 @@ set obs `new_obs_number'
 replace yeshov_name = "חוות שקמים" in `new_obs_number'
 replace yeshov_code_cbs = 1 in `new_obs_number'
 replace coordinates = "16526024" in `new_obs_number' // source google maps 04/05/2022
-replace height = 88 // source google earth 04.05.2022
-replace year = 2022
+replace height = 88 in `new_obs_number' // source google earth 04.05.2022
+replace year = 2022 in `new_obs_number'
+
+drop if yeshov_code_cbs == 1328 //drops earlier version of sansana
+replace yeshov_name = "נצר חזני (גוש קטיף)" if yeshov_code_cbs == 5410 
+replace yeshov_name = "גני טל (גוש קטיף)" if yeshov_code_cbs == 5424
 
 save "${processed_path}\yeshov_list" ,replace
 
