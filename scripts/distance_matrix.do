@@ -28,22 +28,23 @@ foreach station in  `stations' { // loop over stations
 }
 keep s* //keep only station-variables
 tempfile station_coordinates 
+count 
+local expand = $yeshov_count -`r(N)' + 1
+expand `expand' in `r(N)'
 save `station_coordinates', replace //save station list as temp-file
 
 *import localities
 use "${processed_path}\yeshov_list" ,clear
 tostring coordinates , replace 
 drop year 
-merge 1:1 _n using `station_coordinates'
-drop if _merge == 2
-drop _merge
+merge 1:1 _n using `station_coordinates' , nogen
 
 *create distance matrix 
 local obs = _N 
 gen y_itm_x = substr(coordinates,1,4)
 gen y_itm_y = substr(coordinates,5,4)
 
-set trace on 
+//set trace on 
 foreach var of varlist s* {
 	gen s_itm_x = substr(`var',1,4)
 	gen s_itm_y = substr(`var',5,4)
@@ -57,12 +58,12 @@ foreach var of varlist s* {
 
 
 *generate num_stations shortest distances
-local num_staions = $num_stations +10
+set trace on
+local num_stations = $num_stations +10
 foreach type in cl ra {
-
-	forvalues i = 11/$num_stations { // for number of stations defined in run_weather
+	forvalues i = 11/`num_stations' { // for number of stations defined in run_weather
 		gen min_`type'`i'_name = ""
-		egen double min_`type'station`i' = rowmin(*`type')
+		egen double min_`type'station`i' = rowmin(*`type') 
 		ds *`type'
 		foreach varname in `r(varlist)' {
 		//dis `varname'

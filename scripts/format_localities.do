@@ -72,5 +72,7 @@ foreach year of numlist 2003 2010 2020 {
 erase "${processed_path}\yeshov_list`year'.dta"
 }
 
+count 
+global yeshov_count = `r(N)'
 
 
