@@ -37,10 +37,10 @@ program define find_nearest
 	syntax , m_size(integer) metric(string) station_type(string)
 	
 	tempvar count
-	gen `count' = 10
-	forvalues i = 11/`m_size' {
+	gen `count' = 0
+	forvalues i = 1/`m_size' {
 		replace `count' = `count' +1 if !mi(`metric'`i')
-		forvalues j = 11/`m_size'{
+		forvalues j = 1/`m_size'{
 			replace `metric'`j' = `metric'`i' if `count' == `j' & !mi(`metric'`i')
 			replace `metric'_min_`station_type'`j'_name = `metric'_min_`station_type'`i'_name if `count' ==  `j' & !mi(`metric'`i')
 			replace `metric'_min_`station_type'station`j' = `metric'_min_`station_type'station`i' if `count' == `j' & !mi(`metric'`i')
@@ -69,19 +69,22 @@ rename numdate date
 *keep only observations for relevant localities
 gen year = year(date)
 merge m:1 yeshov_code_cbs year using "$processed_path\insured_localities" , keepusing(yeshov_code) keep(3) nogen 
+tempfile insured_localities
+save "`insured_localities'" , replace
 //erase "$processed_path\insured_localities.dta"
  
 *merge distance_matrix.dta 
-tempfile completed_dates
 tempfile new_dates
 set trace on 
 local metric_num 1
 
 foreach metric in $metric_list {
 	
+	use "`insured_localities'" , clear
+	
 	*set macros
 	global matched 0
-	global m_size 13 
+	global m_size 3 
 	global N = _N
 	local runs 3
 	
@@ -93,36 +96,49 @@ foreach metric in $metric_list {
 		local type "cl"
 	}
 	
-	*calculate averages for each metric
-	while ($matched != $N ) & (`runs' <= $num_stations ) {	
+	*set maximum runs
+	if "$num_stations" == "max" {
+		if "`type'" == "ra" {
+			local num_stations $ra_num
+		}
+		else{
+			local num_stations $cl_num
+		}
+	}
+	else {
+		local num_stations "$num_stations"
+	}
 
-		if $m_size == 13 {
-			local starting_value 11
+	*calculate averages for each metric
+	while ($matched != $N ) & (`runs' <= `num_stations' ) {	
+
+		if $m_size == 3 {
+			local starting_value 1
 			merge m:1 yeshov_code_cbs using "${processed_path}\distance_matrix"  ///
-			, keepusing(min_`type'11_name - min_`type'station$m_size) nogen keep(3)	
+			, keepusing(min_`type'1_name - min_`type'station$m_size) nogen keep(3)	
 			merge_weather min_`type'*_name , metric("`metric'") ///
-			station_type("`type'")  start(`starting_value')
-			local starting_value = 14
-			
+			station_type("`type'")  start(1)
+			find_nearest ,m_size(${m_size}) metric("`metric'") station_type("`type'")
 		}
 		else {
-			dis `starting_value'
 			merge m:1 yeshov_code_cbs using "${processed_path}\distance_matrix"  ///
 			, keepusing(min_`type'${m_size}_name - min_`type'station$m_size) nogen keep(3)	
-			merge_weather min_`type'`starting_value'_name , metric("`metric'") ///
-			station_type("`type'")  start(`starting_value')
-			local starting_value = `starting_value' +1
+			merge_weather min_`type'${m_size}_name , metric("`metric'") ///
+			station_type("`type'")  start(${m_size})
+			rename `metric'${m_size} `metric'4
+			rename `metric'_min_`type'${m_size}_name `metric'_min_`type'4_name
+			rename `metric'_min_`type'station${m_size} `metric'_min_`type'station4
+			find_nearest ,m_size(4) metric("`metric'") station_type("`type'")
 		}		
-		find_nearest ,m_size(${m_size}) metric("`metric'") station_type("`type'")
-		gen full = (!mi(`metric'11) & !mi(`metric'12) & !mi(`metric'13))
+		gen full = (!mi(`metric'1) & !mi(`metric'2) & !mi(`metric'3))
 		preserve
 		keep if full == 1
-		gen `metric'_average = (`metric'_min_`type'station11 * `metric'11 ///
-		+`metric'_min_`type'station12 *`metric'12+`metric'_min_`type'station13 * `metric'13)/ ///
-		(`metric'_min_`type'station11+`metric'_min_`type'station12+`metric'_min_`type'station13)
+		gen `metric'_average = (`metric'_min_`type'station1 * `metric'1 ///
+		+`metric'_min_`type'station2 *`metric'2+`metric'_min_`type'station3 * `metric'3)/ ///
+		(`metric'_min_`type'station1+`metric'_min_`type'station2+`metric'_min_`type'station3)
 		keep yeshov_code_cbs yeshov_code yeshov_name date year `metric'_average 
 		if  `metric_num' == 1 {
-			if  $m_size == 13 {
+			if  $m_size == 3 {
 				save "$processed_path\weather_averages" , replace
 			}
 			else {
@@ -144,23 +160,15 @@ foreach metric in $metric_list {
 		//global matched = $matched + 1
 		dis $matched
 		drop if full == 1
-		//forvalues i = ${m_size}(-1)1 {
-			//count if !mi(wind_speed`i')
-			//if `r(N)' == 0{
-				//drop wind_speed`i' wind_speed_min_cl`i'_name wind_speed_min_clstation`i'
-				//local var_number `i'
-			//}
-		//}
+		cap drop `metric'4 `metric'_min_`type'4_name `metric'_min_`type'station4
 		global m_size = $m_size + 1
 		local runs = `runs' + 1
-		dis " runs: `runs' , num_stations : $num_stations"
-		dis "number of `runs'"
+		dis " runs: `runs' , num_stations : `um_stations''"
 		drop full
 
 	}
-	global m_size = $m_size - 1
-	dis $m_size
 	local metric_num = `metric_num' + 1
-	drop `metric'11 - `metric'_min_`type'station$m_size
+	cap drop `metric'1 - `metric'_min_`type'station4
+	cap drop `metric'1 - `metric'_min_`type'station3
 }
 

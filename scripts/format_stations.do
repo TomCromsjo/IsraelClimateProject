@@ -92,5 +92,16 @@ append using "$processed_station_data"
 keep if mi(closing_date) | closing_date>date("31dec1989","DMY")
 drop if  station_type == "evaporation station"
 
+*drop duplicates
+duplicates drop station_id , force 
+
+*create global for number of stations 
+count if station_type == "climate station"
+global cl_num = `r(N)'
+count if station_type == "rain station"
+global ra_num = `r(N)'
+
+*merging stations with same coordinates:
+
 *save station dataset
 save "$processed_station_data" , replace

@@ -4,6 +4,27 @@
 version 17
 frame change default
 
+*command: create_dist_matrix
+program define sort_closest
+	args type num_stations
+	forvalues i = 1/`num_stations' { // for number of stations defined in run_weather
+		gen min_`type'`i'_name = ""
+		egen double min_`type'station`i' = rowmin(*`type') 
+		ds *`type'
+		gen count = 0
+		foreach varname in `r(varlist)' {
+			replace count = count + 1 if `varname' ==  min_`type'station`i'
+			replace min_`type'`i'_name = "`varname'" ///
+			if (`varname' ==  min_`type'station`i') & (count == 1)
+			replace `varname' = .  ///
+			if (`varname' ==  min_`type'station`i') & (count == 1)
+		}
+		drop count
+	}
+end
+
+*body:
+
 use "$processed_path\station_data" , clear //import station dataset
 
 *change itm axes to 100 meter resolution 
@@ -37,14 +58,13 @@ save `station_coordinates', replace //save station list as temp-file
 use "${processed_path}\yeshov_list" ,clear
 tostring coordinates , replace 
 drop year 
-merge 1:1 _n using `station_coordinates' , nogen
+merge 1:1 _n using `station_coordinates' 
 
 *create distance matrix 
-local obs = _N 
 gen y_itm_x = substr(coordinates,1,4)
 gen y_itm_y = substr(coordinates,5,4)
 
-//set trace on 
+*calculate distances
 foreach var of varlist s* {
 	gen s_itm_x = substr(`var',1,4)
 	gen s_itm_y = substr(`var',5,4)
@@ -59,17 +79,13 @@ foreach var of varlist s* {
 
 *generate num_stations shortest distances
 set trace on
-local num_stations = $num_stations +10
-foreach type in cl ra {
-	forvalues i = 11/`num_stations' { // for number of stations defined in run_weather
-		gen min_`type'`i'_name = ""
-		egen double min_`type'station`i' = rowmin(*`type') 
-		ds *`type'
-		foreach varname in `r(varlist)' {
-		//dis `varname'
-			replace min_`type'`i'_name = "`varname'" if `varname' ==  min_`type'station`i'
-			replace `varname' = . if `varname' ==  min_`type'station`i'
-		}
+if "$num_stations" == "max" {
+	sort_closest cl $cl_num
+	sort_closest ra $ra_num
+}
+else{
+	foreach type in cl ra {
+		sort_closest `type' $num_stations
 	}
 }
 
@@ -78,4 +94,26 @@ save "$processed_path\distance_matrix" , replace
 
 
 
+/*
+program define sort_closest
+	args type num_stations
+	gen name = ""
+	gen dist =.
+	ds *`type'
+	local station_list = "`r(varlist)'"
+	local sl_size = wordcount("`station_list'")
+	
+	forvalues i = 1/`num_stations' { // for number of stations defined in run_weather
+		gen min_`type'`i'_name = ""
+		egen double min_`type'station`i' = rowmin(*`type') 
+		
+		forvalues j =  1/`sl_size' {
+			replace 
+			replace min_`type'`i'_name = "`varname'" if `varname' ==  min_`type'station`i'
+			replace `varname' = . if `varname' ==  min_`type'station`i'
+		}
+	}
+    drop name dist
+end
+*/
 

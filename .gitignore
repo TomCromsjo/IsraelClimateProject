@@ -34,3 +34,7 @@ IsraelClimate v0.2.5.rar
 processed/distance_matrix.dta
 processed/station_data.dta
 processed/yeshov_list.dta
+*.rar
+processed/distance_matrix.dta
+processed/station_data.dta
+processed/yeshov_list.dta

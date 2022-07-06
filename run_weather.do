@@ -24,11 +24,13 @@ global thesis "C:\Users\owner\Documents\GitHub\Thesis\processed"
 assert !missing("$MyProject")
 
 *set parameters 
-global start_year 2004
-global end_year 2016
-global num_stations 100
-global evaporation "no" // no- drop evaporation stations
-global metric_list "rain_amount wind_speed max_temp min_temp"
+//global start_year 2004
+//global end_year 2016
+global num_stations max
+//global evaporation "no" // no- drop evaporation stations
+global metric_list "min_temp" // rain_amount wind_speed max_temp
+//global cl_num 149
+//global ra_num 918
 
 *run program
 do "$script_path\format_localities.do" // Creates yeshov_list.dta, a dataset of all localities in Israel and it's settelments.
