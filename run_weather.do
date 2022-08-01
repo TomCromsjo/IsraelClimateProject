@@ -28,7 +28,7 @@ assert !missing("$MyProject")
 //global end_year 2016
 global num_stations max
 //global evaporation "no" // no- drop evaporation stations
-global metric_list "min_temp" // rain_amount wind_speed max_temp
+global metric_list "rain_amount" //"min_temp"  "max_temp" "wind_speed" 
 //global cl_num 149
 //global ra_num 918
 

@@ -22,7 +22,7 @@ replace yeshov_name = "בנימינה-גבעת עדה" if yeshov_code_cbs == 980
 save "`yeshov_list'" , replace
 
 *create a dataset of each locality and years in which it was insured at
-use "$thesis\MixedLogitData_processed.dta", clear
+use "$locality_path\insured_localities_raw.dta", clear
 duplicates drop year yeshov_code , force 
 keep yeshov_code yeshov_name year sector_code sector_name
 

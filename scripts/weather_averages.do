@@ -172,3 +172,7 @@ foreach metric in $metric_list {
 	cap drop `metric'1 - `metric'_min_`type'station3
 }
 
+//merge 1:1 yeshov_code_cbs date using "$processed_path\weather_averages"
+//drop _merge
+//save "C:\Users\owner\Documents\GitHub\IsraelClimateProject\weather_averages_int.dta", replace
+
