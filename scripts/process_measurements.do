@@ -1,9 +1,6 @@
 ***********************************************************
 * create aggregate climate datasets of daily mesurements  *
 ***********************************************************
-version 17
-frame change default
-
 
 *commands:
 *count_measurements: count number of stations that mesured metric in each date

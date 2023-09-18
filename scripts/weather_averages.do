@@ -1,8 +1,7 @@
 ******************************************************
 * create daily averages for Israel between 1990-2020 *
 ******************************************************
-version 17
-frame change default
+
 set varabbrev on
 
 *commands:

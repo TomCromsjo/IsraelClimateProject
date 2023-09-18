@@ -1,8 +1,7 @@
 **********************************************
 *matches insurance dataset to weather dataset*
 **********************************************
-version 17
-frame change default
+version 15
 
 *import and save the locality dictionary
 import excel "$locality_path\yeshov_dictionary.xlsx", sheet("Sheet1") firstrow clear
@@ -33,7 +32,6 @@ drop if _merge == 2 | yeshov_name == "null"
 drop _merge
 
 *merge insured locality dataset the cbs dataset
-frame copy default input_localities_multiple 
 merge m:1 yeshov_name using "`yeshov_list'", keepusing(yeshov_code_cbs)
 sort yeshov_name
 keep if _merge == 3
@@ -42,7 +40,6 @@ duplicates drop year yeshov_code_cbs , force
 save "$processed_path\insured_localities", replace 
 
 *save insured-locality list
-frame copy input_localities_multiple  input_localities_single 
 duplicates drop yeshov_name, force
 keep yeshov_code yeshov_code_cbs yeshov_name 
 

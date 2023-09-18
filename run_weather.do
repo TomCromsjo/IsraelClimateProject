@@ -10,10 +10,12 @@
 **********************
 set more off
 clear all
-clear frames
+
+*download packages
+ssc install numdate
 
 * User must define this global macro to point to the folder path that includes this run.do script
-global MyProject "C:\Users\owner\Documents\GitHub\IsraelClimateProject"
+global MyProject "C:\Users\tomcr\OneDrive\Documents\GitHub\IsraelClimateProject"
 
 global locality_path "${MyProject}\raw_data\localities"
 global climate_path "${MyProject}\raw_data\climate"

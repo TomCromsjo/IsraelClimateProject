@@ -1,8 +1,7 @@
 **********************************************************
 * create distance matrix between stations and localities *
 **********************************************************
-version 17
-frame change default
+version 15
 
 *command: create_dist_matrix
 program define sort_closest
